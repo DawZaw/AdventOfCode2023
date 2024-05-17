@@ -43,4 +43,4 @@ with open(filepath, "r") as file:
     lcm: int = steps[0]
     for i in range(1, n):
         lcm = math.lcm(lcm, steps[i])
-    print(lcm)
+    print(f"Part 2: {lcm}")

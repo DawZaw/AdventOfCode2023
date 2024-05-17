@@ -35,4 +35,4 @@ with open(filepath, "r") as file:
                 current = node_map[current]["left"]
         steps += 1
 
-    print(steps)
+    print(f"Part 1: {steps}")
