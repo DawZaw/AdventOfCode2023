@@ -12,6 +12,8 @@ from typing import Literal, TypeAlias, Any, cast
 Category: TypeAlias = Literal["x", "m", "a", "s"]
 Operator: TypeAlias = Literal["<", ">"]
 
+# Part 1
+
 
 class Rule:
     category: Category | None
@@ -118,6 +120,74 @@ def parse_workflows(workflows: list[str]) -> dict[str, list[Rule]]:
     return workflow_map
 
 
+# Part 2
+
+
+from functools import reduce
+
+
+def get_total(data: list[int]) -> int:
+    return reduce(lambda x, y: x * y, data)
+
+
+def bisect(span: tuple[int, int], value: int) -> tuple[tuple[int, int], ...]:
+    a: tuple[int, int]
+    b: tuple[int, int]
+    if span[0] < value:
+        if span[1] < value:
+            a = span
+            b = (0, 0)
+        else:
+            a = (span[0], value - 1)
+            b = (value - 1, span[1])
+    else:
+        a = (0, 0)
+        b = span
+    return a, b
+
+
+def range_diff(span: tuple[int, int]) -> int:
+    return abs(span[0] - span[1])
+
+
+def get_combinations(
+    workflows: dict[str, list[Rule]],
+    values_range: dict[str, tuple[int, int]],
+    destination: str,
+) -> int:
+    if destination == "A":
+        return get_total([range_diff(vr) for vr in values_range.values()])
+    elif destination == "R":
+        return 0
+
+    workflow: list[Rule] = workflows[destination]
+    total: int = 0
+
+    for rule in workflow:
+        if rule.is_default:
+            total += get_combinations(workflows, values_range, rule.destination)
+        else:
+            new_range: tuple[int, int]
+            remaining: tuple[int, int]
+
+            assert rule.value is not None
+            value: int = rule.value
+            category: Category = cast(Category, rule.category)
+
+            if rule.operator == "<":
+                new_range, remaining = bisect(values_range[category], value)
+
+            elif rule.operator == ">":
+                remaining, new_range = bisect(values_range[category], value + 1)
+
+            new_values_range = values_range.copy()
+            new_values_range[category] = new_range
+            values_range[category] = remaining
+            total += get_combinations(workflows, new_values_range, rule.destination)
+
+    return total
+
+
 with open(filepath, "r") as file:
     data: list[str] = file.read().split("\n\n")
 
@@ -130,3 +200,13 @@ with open(filepath, "r") as file:
         total += part.validate(workflows)
 
     print(f"Part 1: {total}")
+
+    values_range: dict[str, tuple[int, int]] = {
+        "x": (0, 4000),
+        "m": (0, 4000),
+        "a": (0, 4000),
+        "s": (0, 4000),
+    }
+
+    total_combinations: int = get_combinations(workflows, values_range, "in")
+    print(f"Part 2: {total_combinations}")
